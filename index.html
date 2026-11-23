@@ -372,6 +372,21 @@ body.touchmode #airInfo { bottom: auto; right: auto; top: calc(max(8px, env(safe
 #tourText { font-size: 16px; line-height: 1.7; margin: 6px 0 10px; white-space: pre-line; }
 #tourBox .row { justify-content: flex-end; gap: 8px; } #tourSkip { margin-inline-end: auto; }
 
+/* زر المايك العائم (يتسحب) — منقول من «ألعاب عائلية» */
+#micfab{position:fixed;z-index:60;display:none;touch-action:none;user-select:none;-webkit-user-select:none}
+#micfab.show{display:block}
+.mf-btn{width:62px;height:62px;border-radius:50%;border:2px solid rgba(255,255,255,.35);font-size:28px;color:#fff;cursor:grab;
+  background:linear-gradient(180deg,#ff7a8e,#ff4d67);box-shadow:0 8px 22px rgba(0,0,0,.45);animation:mfbob 2.4s ease-in-out infinite;display:flex;align-items:center;justify-content:center;padding:0}
+.mf-btn.on{background:linear-gradient(180deg,#5af0bf,#1fcf93);animation:mfbob 2.4s ease-in-out infinite,mfring 1.3s ease-out infinite}
+@keyframes mfbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes mfring{0%{box-shadow:0 0 0 0 rgba(46,230,166,.65),0 8px 22px rgba(0,0,0,.45)}100%{box-shadow:0 0 0 18px rgba(46,230,166,0),0 8px 22px rgba(0,0,0,.45)}}
+.mf-x{position:absolute;top:-7px;right:-7px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.75);color:#fff;font-size:12px;font-weight:900;cursor:pointer;padding:0}
+.mf-lb{position:absolute;top:68px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;white-space:nowrap;background:rgba(0,0,0,.6);color:#fff;padding:2px 8px;border-radius:99px;pointer-events:none}
+.mf-tab{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.3);font-size:19px;color:#fff;cursor:grab;padding:0;background:linear-gradient(180deg,#ff7a8e,#ff4d67);box-shadow:0 4px 12px rgba(0,0,0,.35);opacity:.45;display:flex;align-items:center;justify-content:center;transition:opacity .2s}
+.mf-tab.on{background:linear-gradient(180deg,#5af0bf,#1fcf93);opacity:.7}
+.mf-tab:hover,#micfab.drag .mf-tab{opacity:1}
+.mf-xs{width:18px;height:18px;font-size:9px;top:-6px;right:-6px;opacity:.6}
+#micfab.drag .mf-btn,#micfab.drag .mf-tab{animation:none;transform:scale(1.12);cursor:grabbing}
 </style>
 <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
 </head>
@@ -449,7 +464,7 @@ body.touchmode #airInfo { bottom: auto; right: auto; top: calc(max(8px, env(safe
       <div class="hero">
         <div class="brand">
           <div class="mark"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="22" fill="none" stroke="currentColor" stroke-width="5"/><circle cx="32" cy="32" r="4" fill="currentColor"/><path d="M32 2v14M32 48v14M2 32h14M48 32h14" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
-          <div><h1 class="logo">جبهة <span>النار</span></h1><p class="sub">شوتر ثلاثي الأبعاد • جوال وكمبيوتر • <b>الإصدار 13</b></p></div>
+          <div><h1 class="logo">جبهة <span>النار</span></h1><p class="sub">شوتر ثلاثي الأبعاد • جوال وكمبيوتر • <b>الإصدار 14</b></p></div>
         </div>
         <div class="profile-card">
           <label class="pname"><span>اسم اللاعب</span><input id="pname" maxlength="16" autocomplete="off"></label>
@@ -533,6 +548,7 @@ body.touchmode #airInfo { bottom: auto; right: auto; top: calc(max(8px, env(safe
         <label>حساسية الماوس <input type="range" id="setSens" min="0.2" max="3" step="0.05"><output></output></label>
         <label>حساسية اللمس <input type="range" id="setTouchSens" min="0.2" max="3" step="0.05"><output></output></label>
         <label>أزرار اللمس <select id="setTouch"><option value="auto">تلقائي</option><option value="on">إظهار دائماً</option><option value="off">إخفاء</option></select></label>
+        <label>زر المايك العائم <select id="setMicFab"><option value="show">ظاهر (كبير)</option><option value="tab">صغير شبه شفاف</option><option value="off">مخفي تماماً</option></select></label>
         <button class="btn ghost" id="editLayout">✥ تعديل أماكن الأزرار</button>
         <button class="btn ghost" id="tourBtn2">🎓 شرح اللعبة من جديد</button>
         <h3>⌨ أزرار الكمبيوتر <span class="note">اضغط على الزر وبعدين اضغط الزر الجديد من الكيبورد</span></h3>
@@ -581,6 +597,7 @@ body.touchmode #airInfo { bottom: auto; right: auto; top: calc(max(8px, env(safe
 
   <div id="rotate-hint">↻ أدر الجهاز للوضع الأفقي لتجربة أفضل</div>
   <div id="toast"></div>
+  <div id="micfab"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -1887,7 +1904,7 @@ const KEY_ACTIONS = [
   ['fwd', 'أمام', 'KeyW'], ['back', 'خلف', 'KeyS'], ['left', 'يسار', 'KeyA'], ['right', 'يمين', 'KeyD'],
   ['jump', 'قفز', 'Space'], ['sprint', 'ركض', 'ShiftLeft'], ['crouch', 'انحناء', 'KeyC'], ['reload', 'تعبئة', 'KeyR'],
   ['switch', 'تبديل السلاح', 'KeyQ'], ['nade', 'قنبلة', 'KeyG'], ['smoke', 'دخان', 'KeyH'], ['knife', 'سكين', 'KeyV'],
-  ['air', 'ضربة جوية', 'KeyF'], ['use', 'زرع / تفكيك القنبلة', 'KeyE'], ['buy', 'قائمة الشراء / أسلحة التدريب', 'KeyN'], ['inspect', 'فحص السلاح', 'KeyT'], ['chat', 'دردشة سريعة', 'KeyB'], ['score', 'النتائج', 'Tab'], ['pause', 'إيقاف', 'KeyP'],
+  ['air', 'ضربة جوية', 'KeyF'], ['use', 'زرع / تفكيك القنبلة', 'KeyE'], ['buy', 'قائمة الشراء / أسلحة التدريب', 'KeyN'], ['inspect', 'فحص السلاح', 'KeyT'], ['chat', 'دردشة سريعة', 'KeyB'], ['score', 'النتائج', 'Tab'], ['pause', 'إيقاف', 'KeyP'], ['mic', 'المايك (أونلاين)', 'KeyM'],
 ];
 const DEFAULT_KEYS = Object.fromEntries(KEY_ACTIONS.map(a => [a[0], a[2]]));
 // أزرار الجوال اللي تقدر تخفيها
@@ -2536,6 +2553,7 @@ const UI = {
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
       if (this._capture) { e.preventDefault(); this._capture(e.code); return; }
       Input.keys[e.code] = true;
+      if (e.code === Profile.data.keys.mic && !e.repeat && Net.active) { micToggle(); return; }   // المايك: يشتغل في الغرفة وأثناء المباراة
       if (!Game.running) return;
       const K = Profile.data.keys, c = e.code;
       if (this.chatOpen && /^Digit[1-6]$/.test(c)) { Game.sendChat(+c.slice(5) - 1); this.toggleChat(false); return; }
@@ -2880,6 +2898,7 @@ const Net = {
     this._lobbyChanged();
     this._publishListing();
     UI.show('scr-lobby');
+    micFab();
     UI.netStatus((this.isPublic ? '🌍 غرفة عامة — تطلع في قائمة الغرف لأي أحد، أو أرسل الرمز ' + code : '🔒 غرفة خاصة — ما يدخلها إلا اللي عنده الرمز ' + code) + ' • الخادم: ' + this.broker.split('/')[2].split(':')[0].replace('broker.', '') + ' (' + this.brokerMs + 'ms)', 'ok');
     this._startTimers();
   },
@@ -2906,6 +2925,7 @@ const Net = {
     const peer = this.peers[pid]; if (!peer) return;
     peer.seen = performance.now();
     if (m.t === 'bye') return this._dropPeer(pid);
+    if (m.t === 'vc') return hostVoice(pid, m.d);   // صوت المايك: المضيف يوزعه
     if (m.t === 'team') return this.setTeam(pid, m.team);
     if (m.t === 'vote') { const p = this.players.find(x => x.id === pid); if (p && !this.started && voteMaps(this.mode).includes(m.map)) { p.vote = m.map; this._lobbyChanged(); } return; }
     this._onMessage(pid, m);
@@ -3025,12 +3045,13 @@ const Net = {
     if (!d || !d.m || d.f !== this.hostId) return;
     if (d.x && d.x === this.myId) return;
     this.lastHost = performance.now();
-    if (!this._joined && d.m.t === 'lobby') { this._joined = true; clearInterval(this._helloT); UI.netStatus('✅ تم الدخول! بانتظار المضيف يبدأ المباراة', 'ok'); }
+    if (!this._joined && d.m.t === 'lobby') { this._joined = true; clearInterval(this._helloT); UI.netStatus('✅ تم الدخول! بانتظار المضيف يبدأ المباراة', 'ok'); micFab(); }
     this._onMessage(this.hostId, d.m);
   },
 
   // ================= مشترك =================
   _onMessage(pid, msg) {
+    if (msg.t === 'vc') { if (!this.isHost) voicePlay(msg.d); return; }   // صوت المايك الواصل من المضيف
     if (msg.t === 'ping') return this.send(pid, { t: 'pong', ts: msg.ts });
     if (msg.t === 'pong') { const v = performance.now() - msg.ts; this.rtt = this.rtt ? this.rtt * 0.6 + v * 0.4 : v; return; }
     if (this.isHost && msg.t === 'quit') { if (this.peers[pid]) { delete this.peers[pid]; this.players = this.players.filter(p => p.id !== pid); } if (Game.online && Game.running) Game.playerWithdrew(pid); return; }
@@ -3147,6 +3168,7 @@ const Net = {
   stopBrowse() { this._browseId = null; clearInterval(this._browseT); (this._browses || []).forEach(c => { try { c.end(true); } catch (e) {} }); this._browses = []; if (this._browse) { try { this._browse.end(true); } catch (e) {} } this._browse = null; this._onRooms = null; },
   leave() {
     clearInterval(this._tick); clearInterval(this._helloT);
+    voiceStop();
     if (this.client) {
       try {
         if (this.isHost) { this.client.publish(this.base + 'room', '', { retain: true, qos: 1 }); this._clearListing(); }
@@ -3156,9 +3178,208 @@ const Net = {
       const c = this.client; setTimeout(() => { try { c.end(true); } catch (e) {} }, 300);
     }
     this.client = null; this.peers = {}; this.active = false; this.started = false; this.players = []; this._joined = false;
+    micFab();
   },
 };
 window.addEventListener('beforeunload', () => { if (Net.active) Net.leave(); });
+
+/* ---------- المايك (صوت داخل الغرفة) — منقول من «ألعاب عائلية» بنفس الفكرة ----------
+   الصوت يتقطع لمقاطع صغيرة (16kHz μ-law، مع فلاتر تشيل الخشخشة) ويمشي عبر نفس طريق الأونلاين (MQTT):
+   اللاعب ← المضيف (/h)، والمضيف يوزع الصوت على الباقين (/all، أو /c/<id> لأعضاء الفريق بس وقت المباراة).
+   الصوت الواصل يطلع من عنصر <audio> عشان يطلع من مكبر الجوال مو سماعة المكالمات. */
+const VR = 16000; // جودة الصوت المرسل
+const V = {on:false,busy:false,ctx:null,out:null,el:null,flt:null,stream:null,src:null,proc:null,mute:null,tail:new Float32Array(0),pos:0,hang:0,seq:Date.now(),next:{},seqs:{},dl:{},rebuilt:false};
+/* هل أنا داخل غرفة أونلاين (مضيف أو لاعب دخل فعلاً) */
+function vcJoined(){return !!(Net.active&&(Net.isHost||Net._joined))}
+function voiceCtx(){
+  if(!V.ctx){try{
+    V.ctx=new (window.AudioContext||window.webkitAudioContext)();V.out=V.ctx.createGain();
+    const lp=V.ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=7200;V.out.connect(lp); // ينعّم الصوت الواصل
+    // رفع الصوت مع ضاغط يمنع التشويش لو علا (الآيفون يوطّي الصوت وقت المايك)
+    const boost=V.ctx.createGain();boost.gain.value=2;
+    const comp=V.ctx.createDynamicsCompressor();comp.threshold.value=-10;comp.knee.value=6;comp.ratio.value=12;comp.attack.value=0.002;comp.release.value=0.15;
+    lp.connect(boost);boost.connect(comp);const fin=comp; // الرفع قبل الضاغط عشان ما يقص الصوت ويشوّه
+    let routed=false;
+    try{if(V.ctx.createMediaStreamDestination){const md=V.md=V.ctx.createMediaStreamDestination();fin.connect(md);
+      const el=V.el=document.createElement('audio');el.autoplay=true;el.muted=false;el.volume=1;el.setAttribute('playsinline','');el.setAttribute('webkit-playsinline','');el.playsInline=true;
+      el.style.display='none';el.srcObject=md.stream;document.body.appendChild(el);routed=true}}catch(e){}
+    if(!routed)fin.connect(V.ctx.destination);
+    const cx=V.ctx;cx.onstatechange=()=>{if(V.ctx===cx&&cx.state!=='running'&&cx.state!=='closed')cx.resume().catch(()=>{})}; // الآيفون يوقف الصوت أحيانًا (interrupted)
+    if(!V.on)audioMode('playback');
+  }catch(e){return null}}
+  voiceWake();
+  return V.ctx;
+}
+/* يرجّع الصوت يشتغل على المكبر (بعد المكالمات أو قفل الشاشة أو تشغيل المايك) */
+function voiceWake(){
+  if(!V.ctx)return;
+  audioMode(V.on?'play-and-record':'playback');
+  if(V.ctx.state!=='running')V.ctx.resume().catch(()=>{});
+  if(V.el&&V.el.paused)V.el.play().catch(()=>{});
+}
+/* الآيفون أحيانًا يعلّق الصوت على سماعة الأذن بعد تشغيل/قفل المايك: نعيد ربط المشغّل عشان يرجع للمكبر */
+function voiceReroute(){
+  if(!V.el||!V.md)return;
+  try{V.el.srcObject=null;V.el.srcObject=V.md.stream}catch(e){}
+  voiceWake();
+}
+/* الآيفون يغيّر تردد الصوت لما يشتغل المايك أو يقفل، فالصوت القديم يطلع مشوّه أو مسرّع: نبني الصوت من جديد */
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function voiceRebuild(){
+  const old=V.ctx,oel=V.el;if(!old)return;
+  V.ctx=V.out=V.el=V.md=null;V.next={};V.dl={};
+  if(oel){try{oel.pause();oel.srcObject=null;oel.remove()}catch(e){}}
+  voiceCtx();
+  try{old.close()}catch(e){}
+}
+/* آيفون: نخلي الصوت على المكبر (playback لما المايك مقفل، play-and-record لما شغال) */
+function audioMode(t){try{if(navigator.audioSession&&navigator.audioSession.type!==t)navigator.audioSession.type=t}catch(e){}}
+function mulawEnc(x){let s=Math.round(Math.max(-1,Math.min(1,x))*32767);const sign=s<0?0x80:0;if(s<0)s=-s;s=Math.min(s,32635)+132;let e=7;for(let m=0x4000;(s&m)===0&&e>0;m>>=1)e--;return(~(sign|(e<<4)|((s>>(e+3))&0x0F)))&0xFF}
+function mulawDec(u){u=~u&0xFF;const e=(u>>4)&7,t=(((u&0x0F)<<3)+132)<<e;return((u&0x80)?132-t:t-132)/32768}
+async function micToggle(){
+  if(V.busy)return;
+  if(V.on){micOff();micFab();UI.toast('🔇 قفلت المايك');return}
+  if(!vcJoined()){UI.toast('المايك يشتغل داخل غرفة الأونلاين بس');return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){UI.toast('المايك يحتاج تفتح اللعبة من رابط https');return}
+  let ctx=voiceCtx();if(!ctx){UI.toast('جهازك ما يدعم الصوت');return}
+  V.busy=true;audioMode('play-and-record');
+  try{V.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}})}
+  catch(e){V.busy=false;audioMode('playback');UI.toast('ما قدرنا نشغل المايك — اسمح للمتصفح يستخدم المايك');return}
+  V.busy=false;
+  if(!vcJoined()){micOff();return}
+  audioMode('play-and-record');
+  {const sr=V.stream.getAudioTracks()[0]&&V.stream.getAudioTracks()[0].getSettings?V.stream.getAudioTracks()[0].getSettings().sampleRate:0;
+   if(IOS&&(!sr||sr!==ctx.sampleRate)){voiceRebuild();V.rebuilt=true;ctx=V.ctx;if(!ctx){micOff();UI.toast('جهازك ما يدعم الصوت');return}}} // نعيد البناء بس لو التردد اختلف
+  const tr=V.stream.getAudioTracks()[0];if(tr)tr.onended=()=>{if(V.on&&V.stream&&V.stream.getAudioTracks()[0]===tr){micOff();micFab();UI.toast('🔇 المايك انقفل، اضغطه عشان ترجعه')}}; // الآيفون يقفل المايك لو طلعت من الصفحة
+  V.src=ctx.createMediaStreamSource(V.stream);V.proc=ctx.createScriptProcessor(2048,1,1);V.mute=ctx.createGain();V.mute.gain.value=0;
+  const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=110; // يشيل الطنين والهواء
+  const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=7200; // يمنع التشويش قبل التحويل
+  V.flt=[hp,lp];
+  V.src.connect(hp);hp.connect(lp);lp.connect(V.proc);V.proc.connect(V.mute);V.mute.connect(ctx.destination);
+  voiceWake();setTimeout(voiceReroute,300);setTimeout(voiceWake,1200); // الآيفون يغيّر مخرج الصوت بعد تشغيل المايك
+  V.tail=new Float32Array(0);V.pos=0;V.hang=0;V.proc.onaudioprocess=micChunk;V.on=true;
+  micFab();UI.toast('🎙️ المايك شغال');
+}
+function micOff(){
+  const was=V.on||!!V.stream;V.on=false;
+  try{V.proc&&(V.proc.onaudioprocess=null,V.proc.disconnect());V.src&&V.src.disconnect();V.mute&&V.mute.disconnect();(V.flt||[]).forEach(f=>f.disconnect())}catch(e){}
+  if(V.stream)V.stream.getTracks().forEach(t=>{try{t.stop()}catch(e){}});
+  V.stream=V.src=V.proc=V.mute=V.flt=null;
+  audioMode('playback');
+  if(was&&V.rebuilt&&vcJoined())voiceRebuild(); // يرجع الصوت نظيف على المكبر بكامل قوته
+  V.rebuilt=false;
+  setTimeout(voiceReroute,300);
+}
+function voiceStop(){micOff();V.next={};V.seqs={};V.dl={}}
+function micChunk(e){
+  if(!V.on||!vcJoined())return;
+  const inp=e.inputBuffer.getChannelData(0),buf=new Float32Array(V.tail.length+inp.length);buf.set(V.tail);buf.set(inp,V.tail.length);
+  const r=V.ctx.sampleRate/VR,out=[];let pos=V.pos,sq=0;
+  while(pos+r<=buf.length){const a=Math.floor(pos),b=Math.max(a+1,Math.floor(pos+r));let s=0;for(let i=a;i<b;i++)s+=buf[i];s/=(b-a);out.push(s);sq+=s*s;pos+=r}
+  const cut=Math.floor(pos);V.tail=buf.slice(cut);V.pos=pos-cut;
+  if(!out.length)return;
+  if(Math.sqrt(sq/out.length)>0.008)V.hang=10;else if(V.hang>0)V.hang--;else return; // ما نرسل وقت السكوت
+  if(V.hang===0){const L=Math.min(out.length,96);for(let i=0;i<L;i++)out[out.length-1-i]*=i/L} // تخفيت آخر مقطع عشان ما تطلع طقّة
+  const u8=new Uint8Array(out.length);for(let i=0;i<out.length;i++)u8[i]=mulawEnc(out[i]);
+  let bin='';for(let i=0;i<u8.length;i++)bin+=String.fromCharCode(u8[i]);
+  voiceOut({n:V.seq++,a:btoa(bin),r:VR});
+}
+/* اللاعب يرسل صوته للمضيف (موضوع /h)، والمضيف يوزعه */
+function voiceOut(d){
+  if(!vcJoined())return;
+  if(Net.isHost)return hostVoice(Net.myId,d);
+  Net.send(Net.hostId,{t:'vc',d});
+}
+function hostVoice(from,d){
+  if(!Net.isHost||!d||typeof d.a!=='string'||d.a.length>6000||typeof d.n!=='number')return;
+  if(from!==Net.myId&&!Net.peers[from])return;
+  const r=d.r===16000?16000:8000;
+  const m={t:'vc',d:{f:from,n:d.n,a:d.a,r}};
+  const tf=voiceTeam(from),hear=id=>tf==null||voiceTeam(id)===tf; // غرف الفرق: وقت المباراة كل فريق يسمع فريقه بس
+  if(tf==null)Net.broadcast(m,false,from); // الكل يسمع الكل (موضوع /all، والمتكلم ما يرجع له صوته)
+  else Net.players.forEach(p=>{if(p.id!==from&&p.id!==Net.myId&&hear(p.id))Net.send(p.id,m)}); // صوت الفريق يروح لأعضائه بس على /c/<id>، مو للموضوع العام
+  if(from!==Net.myId&&hear(Net.myId))voicePlay(m.d);
+}
+/* غرف الفرق للصوت: null = الكل يسمع الكل */
+function voiceTeam(id){
+  return null; // بطلب صاحب اللعبة: الكل يسمع الكل دايماً (حتى وقت المباراة). لو تبي كل فريق يسمع فريقه بس وقت المباراة، رجّع هنا فريق اللاعب ('A' أو 'B')
+}
+function voicePlay(d){
+  if(!d||typeof d.a!=='string'||!d.f||d.f===Net.myId)return;
+  const last=V.seqs[d.f];if(last!=null&&d.n<=last)return;V.seqs[d.f]=d.n; // بدون تكرار
+  const ctx=voiceCtx();if(!ctx)return;
+  let bin;try{bin=atob(d.a)}catch(e){return}
+  const n=bin.length;if(!n)return;
+  const pcm=new Float32Array(n);for(let i=0;i<n;i++)pcm[i]=mulawDec(bin.charCodeAt(i));
+  const sr=ctx.sampleRate,k=sr/(d.r===16000?16000:8000),len=Math.floor(n*k);
+  const ab=ctx.createBuffer(1,len,sr),ch=ab.getChannelData(0);
+  for(let j=0;j<len;j++){const x=j/k,i=Math.floor(x),f=x-i,a=pcm[i],b=i+1<n?pcm[i+1]:a;ch[j]=a+(b-a)*f}
+  const now=ctx.currentTime,prev=V.next[d.f]||0;let dl=V.dl[d.f]||0.1,t=prev;
+  if(t<now+0.01){
+    if(prev&&now-prev<0.35)dl=Math.min(0.35,dl+0.05); // وصل متأخر وسط الكلام: نكبّر المخزن عشان ما يتقطع
+    t=now+dl;const F=Math.min(len,96);for(let j=0;j<F;j++)ch[j]*=j/F; // بداية ناعمة بدون طقّة
+  }else if(t>now+dl+0.25)return; // تأخر زايد: نتخطى هالمقطع عشان نلحق الكلام بدون ما يتداخل الصوت
+  else dl=Math.max(0.08,dl-0.002); // الشبكة مستقرة: نقلل التأخير شوي شوي
+  V.dl[d.f]=dl;
+  const src=ctx.createBufferSource();src.buffer=ab;src.connect(V.out);
+  src.start(t);V.next[d.f]=t+ab.duration;
+}
+
+/* زر المايك العائم: اضغط = تشغيل/قفل، اسحبه لأي مكان في الشاشة (فوق، تحت، الجنب)، والمكان ينحفظ.
+   ✕ على الزر الكبير = يصير زر صغير شبه شفاف (يشتغل مايك بعد، وينسحب لأي مكان)، و✕ على الصغير = مخفي تماماً.
+   ترجعه من الإعدادات ← «زر المايك العائم». والكمبيوتر يقدر يستخدم زر M حتى لو الزر مخفي. */
+const MLS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const MF=(()=>{
+  const p=MLS.get('jabhat_micpos',{})||{},h=MLS.get('jabhat_michide','show');
+  const mode=h===true?'tab':(h==='tab'||h==='off'?h:'show');
+  let x=typeof p.x==='number'?p.x:(p.side==='right'?innerWidth-72:10); // النسخة القديمة كانت تحفظ الجنب بس
+  return {x,y:typeof p.y==='number'?p.y:Math.round(innerHeight*.6),mode};
+})();
+function micFabMode(m){
+  MF.mode=m;MLS.set('jabhat_michide',m);micFab();
+  const sel=$('#setMicFab');if(sel)sel.value=m;
+}
+function placeFab(el){
+  const w=el.offsetWidth||62,h=el.offsetHeight||62,lb=MF.mode==='show'?22:0;
+  MF.x=Math.max(4,Math.min(innerWidth-w-4,MF.x||0));MF.y=Math.max(4,Math.min(innerHeight-h-lb-4,MF.y||0));
+  el.style.left=MF.x+'px';el.style.top=MF.y+'px';el.style.right='auto';
+}
+function micFab(){
+  const el=$('#micfab');if(!el)return;
+  if(!vcJoined()||MF.mode==='off'){el.className='';el.innerHTML='';return}
+  const ic=V.on?'🎙️':'🔇';
+  el.className='show';
+  el.innerHTML=MF.mode==='tab'
+    ?'<button class="mf-tab'+(V.on?' on':'')+'" data-m="mic" aria-label="المايك">'+ic+'</button><button class="mf-x mf-xs" data-m="off" aria-label="إخفاء تماماً">✕</button>'
+    :'<button class="mf-btn'+(V.on?' on':'')+'" data-m="mic" aria-label="المايك">'+ic+'</button><button class="mf-x" data-m="tab" aria-label="تصغير">✕</button><span class="mf-lb">'+(V.on?'المايك شغال':'المايك مقفل')+'</span>';
+  placeFab(el);
+}
+(function(){
+  const el=$('#micfab');if(!el)return;let st=null;
+  el.addEventListener('pointerdown',e=>{e.stopPropagation();const r=el.getBoundingClientRect();st={x:e.clientX,y:e.clientY,ox:r.left,oy:r.top,drag:false,t:e.target.closest('[data-m]')};try{el.setPointerCapture(e.pointerId)}catch(_){}});
+  el.addEventListener('pointermove',e=>{
+    if(!st)return;const dx=e.clientX-st.x,dy=e.clientY-st.y;
+    if(!st.drag&&Math.hypot(dx,dy)<8)return;
+    st.drag=true;el.classList.add('drag');MF.x=st.ox+dx;MF.y=st.oy+dy;placeFab(el);
+  });
+  el.addEventListener('pointerup',()=>{
+    if(!st)return;const s=st;st=null;el.classList.remove('drag');
+    if(s.drag){placeFab(el);MLS.set('jabhat_micpos',{x:MF.x,y:MF.y});return}
+    const m=s.t&&s.t.dataset.m;if(!m)return;voiceCtx();
+    if(m==='mic')micToggle();
+    else if(m==='tab')micFabMode('tab');
+    else if(m==='off'){micFabMode('off');UI.toast('أخفيت زر المايك — ترجعه من الإعدادات ← «زر المايك العائم»'+(IS_TOUCH?'':' (أو استخدم زر M)'),3500)}
+  });
+  el.addEventListener('pointercancel',()=>{st=null;el.classList.remove('drag');placeFab(el)});
+  ['mousedown','touchstart'].forEach(ev=>el.addEventListener(ev,e=>e.stopPropagation(),{passive:true})); // ضغطة المايك ما تنحسب إطلاق أو حركة كاميرا
+  addEventListener('resize',()=>{if(vcJoined()&&MF.mode!=='off')placeFab(el)});
+  const sel=$('#setMicFab');if(sel){sel.value=MF.mode;sel.addEventListener('change',()=>micFabMode(sel.value))}
+})();
+/* تفعيل الصوت: داخل الغرفة بأي ضغطة، وبرا الغرفة بس من أزرار الدخول (الآيفون يحتاج لمسة عشان يشغّل الصوت) */
+const voiceTap=e=>{if(vcJoined()||V.ctx){voiceCtx();return}const el=e.target&&e.target.closest&&e.target.closest('#createRoom,#joinRoom,[data-join]');if(el)voiceCtx()};
+document.addEventListener('click',voiceTap,true);
+['touchend','pointerup'].forEach(ev=>document.addEventListener(ev,voiceTap,{capture:true,passive:true}));
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')voiceWake()});
 
 </script>
 <script>
